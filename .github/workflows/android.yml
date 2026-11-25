@@ -2,17 +2,13 @@ name: Build Tokkor Stories APK
 
 on:
   workflow_dispatch:
-  push:
-    paths:
-      - 'tokkor-stories.zip'
-      - '.github/workflows/android.yml'
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -21,20 +17,21 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Extract Android project
+      - name: Install Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
+
+      - name: Extract project
         run: |
-          sudo apt-get update
-          sudo apt-get install -y unzip
           unzip -q tokkor-stories.zip -d project
-          PROJECT_DIR=$(dirname "$(find project -name settings.gradle.kts -print -quit)")
-          echo "PROJECT_DIR=$PROJECT_DIR" >> $GITHUB_ENV
-          echo "Project found at: $PROJECT_DIR"
+          find project -name settings.gradle.kts
 
       - name: Build APK
         run: |
+          PROJECT_DIR=$(dirname "$(find project -name settings.gradle.kts -print -quit)")
           cd "$PROJECT_DIR"
-          test -f gradle/wrapper/gradle-wrapper.jar
-          java -classpath gradle/wrapper/gradle-wrapper.jar org.gradle.wrapper.GradleWrapperMain assembleDebug
+          gradle assembleDebug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
