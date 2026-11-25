@@ -1,3 +1,4 @@
+
 name: Build Tokkor Stories APK
 
 on:
@@ -8,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -22,16 +23,20 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Extract project
+      - name: Extract Android project
         run: |
           unzip -q tokkor-stories.zip -d project
-          find project -name settings.gradle.kts
+          echo "Extracted files:"
+          find project -maxdepth 4 -type f | head -80
 
-      - name: Build APK
+      - name: Find project and build APK
         run: |
-          PROJECT_DIR=$(dirname "$(find project -name settings.gradle.kts -print -quit)")
+          set -eux
+          SETTINGS=$(find project -name settings.gradle.kts -print -quit)
+          test -n "$SETTINGS"
+          PROJECT_DIR=$(dirname "$SETTINGS")
           cd "$PROJECT_DIR"
-          gradle assembleDebug
+          gradle assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
