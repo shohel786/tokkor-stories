@@ -1,5 +1,5 @@
 
-name: Build Tokkor Stories APK
+name: Tokkor Stories APK Builder
 
 on:
   workflow_dispatch:
@@ -10,10 +10,10 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: '17'
@@ -26,18 +26,23 @@ jobs:
         with:
           gradle-version: '8.9'
 
-      - name: Extract Android project
+      - name: Extract project ZIP
         run: |
           unzip -q "Tokkor stories.zip" -d project
+          echo "Project extracted successfully"
 
-      - name: Build APK
+      - name: Build Android APK
         run: |
           SETTINGS=$(find project -name settings.gradle.kts -print -quit)
           if [ -z "$SETTINGS" ]; then
             SETTINGS=$(find project -name settings.gradle -print -quit)
           fi
-          test -n "$SETTINGS"
+          if [ -z "$SETTINGS" ]; then
+            echo "ERROR: Gradle settings file not found"
+            exit 1
+          fi
           PROJECT_DIR=$(dirname "$SETTINGS")
+          echo "Building from: $PROJECT_DIR"
           cd "$PROJECT_DIR"
           gradle assembleDebug --stacktrace
 
@@ -46,3 +51,4 @@ jobs:
         with:
           name: Tokkor-Stories-APK
           path: project/**/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
